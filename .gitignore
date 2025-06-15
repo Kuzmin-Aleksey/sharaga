@@ -1,5 +1,6 @@
 .idea
 *.exe
 *.log
-config/config.yaml
+**/config.yaml
 .env
+*.drawio.bkp
