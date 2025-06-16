@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sharaga/internal/domain/aggregate"
 	"sharaga/internal/domain/entity"
+	"sharaga/pkg/contextx"
 )
 
 type Repository interface {
@@ -27,6 +28,8 @@ func NewService(repo Repository) *Service {
 func (s *Service) NewOrder(ctx context.Context, order *aggregate.OrderProducts) error {
 	const op = "orders.NewOrder"
 
+	order.Order.CreatorId = int(contextx.GetUserId(ctx))
+
 	if err := s.repo.Save(ctx, order); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -44,7 +47,7 @@ func (s *Service) GetAll(ctx context.Context) ([]aggregate.OrderProductInfo, err
 }
 
 func (s *Service) GetByPartner(ctx context.Context, partnerId int) ([]aggregate.OrderProductInfo, error) {
-	const op = "orders.GetAll"
+	const op = "orders.GetByPartner"
 
 	orders, err := s.repo.GetByPartner(ctx, partnerId)
 	if err != nil {

@@ -26,11 +26,23 @@ func (r *OrdersRepo) Save(ctx context.Context, order *aggregate.OrderProducts) e
 		return failure.NewInternalError(err.Error())
 	}
 
-	if _, err := tx.NamedExecContext(ctx, "INSERT INTO orders (creator_id, partner_id, created_at) VALUES (:creator_id, :partner_id, :created_at)", order.Order); err != nil {
+	res, err := tx.NamedExecContext(ctx, "INSERT INTO orders (creator_id, partner_id, created_at) VALUES (:creator_id, :partner_id, :created_at)", order.Order)
+	if err != nil {
 		return failure.NewInternalError(err.Error())
 	}
 
-	for _, product := range order.Products {
+	orderId, err := res.LastInsertId()
+	if err != nil {
+		if err := tx.Rollback(); err != nil {
+			contextx.GetLoggerOrDefault(ctx).WarnContext(ctx, "save order: rollback failed: ", logx.Error(err))
+		}
+		return failure.NewInternalError(err.Error())
+	}
+	order.Order.Id = int(orderId)
+
+	for i, product := range order.Products {
+		order.Products[i].OrderId = order.Order.Id
+
 		if _, err := tx.NamedExecContext(ctx, "INSERT INTO order_product (order_id, product_id, quantity) VALUES (:order_id, :product_id, :quantity)", product); err != nil {
 			if err := tx.Rollback(); err != nil {
 				contextx.GetLoggerOrDefault(ctx).WarnContext(ctx, "save order: rollback failed: ", logx.Error(err))
