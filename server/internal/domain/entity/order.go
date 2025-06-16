@@ -7,4 +7,5 @@ type Order struct {
 	CreatorId int       `json:"creator_id" db:"creator_id"`
 	PartnerId int       `json:"partner_id" db:"partner_id"`
 	CreateAt  time.Time `json:"create_at" db:"create_at"`
+	Price     int       `json:"price" db:"price"`
 }

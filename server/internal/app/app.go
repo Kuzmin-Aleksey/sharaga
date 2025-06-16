@@ -58,7 +58,7 @@ func (a *App) Run() (err error) {
 	userService := users.NewService(usersRepo)
 	productService := products.NewService(productsRepo)
 	partnerService := partners.NewService(partnersRepo)
-	orderService := orders.NewService(ordersRepo)
+	orderService := orders.NewService(ordersRepo, productsRepo)
 	authService := auth.NewService(usersRepo, a.redis)
 
 	a.newHttpServer(

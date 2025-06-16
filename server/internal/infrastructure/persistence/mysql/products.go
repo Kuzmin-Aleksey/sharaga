@@ -32,7 +32,7 @@ func (r *ProductsRepo) Save(ctx context.Context, product *entity.Product) error 
 	return nil
 }
 
-func (r *ProductsRepo) FindByID(ctx context.Context, id int) (product *entity.Product, err error) {
+func (r *ProductsRepo) FindById(ctx context.Context, id int) (product *entity.Product, err error) {
 	product = &entity.Product{}
 	if err := r.db.GetContext(ctx, product, "SELECT * FROM products WHERE id=?", id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

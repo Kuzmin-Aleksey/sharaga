@@ -85,7 +85,7 @@ func (r *OrdersRepo) GetByPartner(ctx context.Context, partnerId int) ([]aggrega
 		if err := r.db.SelectContext(ctx, productInfo, `
 			SELECT p.id AS id, p.article AS article, p.type AS type, p.name AS name, p.description AS description, p.min_price AS min_price, p.size_x AS size_x, p.size_y AS size_y, p.size_z AS size_z, p.weight AS weight, p.weight_pack AS weight_pack, op.quantity AS quantity 
  			FROM order_product op
-			INNER JOIN products p ON op.product_id = p.id
+			INNER JOIN products p ON p.id = op.product_id
 `, order); err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
 				return nil, failure.NewInternalError(err.Error())
@@ -99,6 +99,22 @@ func (r *OrdersRepo) GetByPartner(ctx context.Context, partnerId int) ([]aggrega
 	}
 
 	return ordersWithProducts, nil
+}
+
+func (r *OrdersRepo) GetPartnerProductCount(ctx context.Context, partnerId int) (int, error) {
+	var count int
+
+	if err := r.db.GetContext(ctx, &count, `
+			SELECT SUM(op.quantity) AS count
+ 			FROM order_product op
+			INNER JOIN orders o ON op.order_id = o.id
+			WHERE o.partner_id=?`, partnerId); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+	}
+
+	return count, nil
 }
 
 func (r *OrdersRepo) GetAll(ctx context.Context) ([]aggregate.OrderProductInfo, error) {

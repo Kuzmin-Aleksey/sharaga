@@ -27,7 +27,7 @@ func NewUserServer(userService userService) *UserServer {
 	}
 }
 
-func (s *UserServer) NewUser(w http.ResponseWriter, r *http.Request) {
+func (s *UserServer) New(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := new(entity.User)
 
@@ -46,7 +46,7 @@ func (s *UserServer) NewUser(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
-func (s *UserServer) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (s *UserServer) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := new(entity.User)
 
@@ -63,7 +63,7 @@ func (s *UserServer) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *UserServer) DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (s *UserServer) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userId, err := strconv.Atoi(r.FormValue("user_id"))
 	if err != nil {
