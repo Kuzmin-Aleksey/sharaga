@@ -28,20 +28,21 @@ type Service struct {
 	repo  Repository
 	cache Cache
 
-	cfg *config.AuthConfig
+	cfg config.AuthConfig
 }
 
-func NewService(repo Repository, cache Cache) *Service {
+func NewService(cfg config.AuthConfig, repo Repository, cache Cache) *Service {
 	return &Service{
+		cfg:   cfg,
 		repo:  repo,
 		cache: cache,
 	}
 }
 
-func (s *Service) Login(ctx context.Context, username, password string) (*entity.Tokens, error) {
+func (s *Service) Login(ctx context.Context, email, password string) (*entity.Tokens, error) {
 	const op = "auth.Login"
 
-	user, err := s.repo.GetWithPassword(ctx, username, password)
+	user, err := s.repo.GetWithPassword(ctx, email, password)
 	if err != nil {
 		if failure.IsNotFoundError(err) {
 			return nil, failure.NewUnauthorizedError("invalid username or password")
@@ -111,7 +112,7 @@ func (s *Service) DecodeAccessToken(access string) (int, error) {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return s.cfg.AccessKey, nil
+		return []byte(s.cfg.AccessKey), nil
 	})
 
 	if err != nil {
@@ -145,7 +146,7 @@ func (s *Service) NewAccessToken(id int) (string, time.Time, error) {
 		"id":      id,
 		"expires": expires.Unix(),
 	})
-	token, err := claims.SignedString(s.cfg.AccessKey)
+	token, err := claims.SignedString([]byte(s.cfg.AccessKey))
 	if err != nil {
 		return "", expires, failure.NewInternalError("create token error: " + err.Error())
 	}

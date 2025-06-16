@@ -103,14 +103,14 @@ func (r *UsersRepo) GetAll(ctx context.Context) ([]entity.User, error) {
 	return users, nil
 }
 
-func (r *UsersRepo) GetWithPassword(ctx context.Context, username, password string) (*entity.User, error) {
+func (r *UsersRepo) GetWithPassword(ctx context.Context, email, password string) (*entity.User, error) {
 	passwordHash, err := authutil.HashPassword(password)
 	if err != nil {
 		return nil, failure.NewInternalError(err.Error())
 	}
 
 	user := new(entity.User)
-	if err := r.db.GetContext(ctx, user, "SELECT * FROM users WHERE username=? AND password=?", username, passwordHash); err != nil {
+	if err := r.db.GetContext(ctx, user, "SELECT * FROM users WHERE email=? AND password=?", email, passwordHash); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, failure.NewNotFoundError(err.Error())
 		}

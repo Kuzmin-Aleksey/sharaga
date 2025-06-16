@@ -59,7 +59,11 @@ func (a *App) Run() (err error) {
 	productService := products.NewService(productsRepo)
 	partnerService := partners.NewService(partnersRepo)
 	orderService := orders.NewService(ordersRepo, productsRepo)
-	authService := auth.NewService(usersRepo, a.redis)
+	authService := auth.NewService(a.cfg.Auth, usersRepo, a.redis)
+
+	if err := userService.CreateAdminIfNotExist(context.Background()); err != nil {
+		return fmt.Errorf("create admin user: %w", err)
+	}
 
 	a.newHttpServer(
 		userService,

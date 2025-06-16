@@ -23,10 +23,10 @@ func NewAuthServer(authService authService) *AuthServer {
 func (s *AuthServer) login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	login := r.FormValue("email")
+	email := r.FormValue("email")
 	password := r.FormValue("password")
 
-	tokens, err := s.authService.Login(ctx, login, password)
+	tokens, err := s.authService.Login(ctx, email, password)
 	if err != nil {
 		writeAndLogErr(ctx, w, err)
 		return

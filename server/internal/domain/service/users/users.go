@@ -66,3 +66,31 @@ func (s *Service) GetRole(ctx context.Context, userId int) (string, error) {
 
 	return role, nil
 }
+
+func (s *Service) CreateAdminIfNotExist(ctx context.Context) error {
+	const op = "users.CreateAdminIfNotExist"
+
+	users, err := s.GetAll(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	for _, user := range users {
+		if user.Role == entity.UserRoleAdmin {
+			return nil
+		}
+	}
+
+	user := &entity.User{
+		Role:     entity.UserRoleAdmin,
+		Email:    "admin@example.com",
+		Name:     "admin",
+		Password: "admin",
+	}
+
+	if err := s.repo.Save(ctx, user); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
