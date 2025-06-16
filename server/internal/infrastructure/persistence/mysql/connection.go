@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func Connect(cfg config.MySqlConfig) (*sqlx.DB, error) {
+func Connect(cfg config.MysqlConfig) (*sqlx.DB, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.ConnectTimeout)*time.Second)
 	defer cancel()
 

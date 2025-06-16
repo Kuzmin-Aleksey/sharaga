@@ -39,6 +39,37 @@ func (r *UsersRepo) Save(ctx context.Context, user *entity.User) (err error) {
 	return nil
 }
 
+func (r *UsersRepo) Update(ctx context.Context, user *entity.User) (err error) {
+	user.Password, err = authutil.HashPassword(user.Password)
+	if err != nil {
+		return failure.NewInternalError(err.Error())
+	}
+	var query string
+
+	if user.Password != "" {
+		user.Password, err = authutil.HashPassword(user.Password)
+		if err != nil {
+			return failure.NewInternalError(err.Error())
+		}
+
+		query = "UPDATE users SET role=:role, name=:name, email=:email, password=:password WHERE id=:id"
+	} else {
+		query = "UPDATE users SET role=:role, name=:name, email=:email WHERE id=:id"
+	}
+
+	res, err := r.db.NamedExecContext(ctx, query, user)
+	if err != nil {
+		return failure.NewInternalError(err.Error())
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return failure.NewInternalError(err.Error())
+	}
+	user.Id = int(id)
+
+	return nil
+}
+
 func (r *UsersRepo) FindById(ctx context.Context, id int) (*entity.User, error) {
 	user := &entity.User{}
 	if err := r.db.GetContext(ctx, user, "SELECT * FROM users WHERE id=?", id); err != nil {

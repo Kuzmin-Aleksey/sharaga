@@ -5,7 +5,6 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
 	"os"
-	"time"
 )
 
 type Config struct {
@@ -37,11 +36,11 @@ type RedisConfig struct {
 }
 
 type HttpServerConfig struct {
-	Addr            string        `yaml:"addr" env:"HTTP_ADDR" env-default:"localhost:8080"`
-	ReadTimeout     time.Duration `yaml:"read_timeout" env:"HTTP_READ_TIMEOUT" env-default:"10s"`
-	WriteTimeout    time.Duration `yaml:"write_timeout" env:"HTTP_WRITE_TIMEOUT" env-default:"10s"`
-	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" env:"HTTP_SHUTDOWN_TIMEOUT" env-default:"10s"`
-	Log             HttpLog       `yaml:"log"`
+	Addr            string  `yaml:"addr" env:"HTTP_ADDR" env-default:"localhost:8080"`
+	ReadTimeout     int     `yaml:"read_timeout" env:"HTTP_READ_TIMEOUT" env-default:"10"`
+	WriteTimeout    int     `yaml:"write_timeout" env:"HTTP_WRITE_TIMEOUT" env-default:"10"`
+	ShutdownTimeout int     `yaml:"shutdown_timeout" env:"HTTP_SHUTDOWN_TIMEOUT" env-default:"10"`
+	Log             HttpLog `yaml:"log"`
 }
 
 type HttpLog struct {

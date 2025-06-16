@@ -51,4 +51,5 @@ func (s *Service) GetByPartner(ctx context.Context, partnerId int) ([]aggregate.
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
+	return orders, nil
 }

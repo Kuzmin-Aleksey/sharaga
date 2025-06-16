@@ -22,6 +22,7 @@ import (
 	"sharaga/pkg/contextx"
 	"sharaga/pkg/logx"
 	"sharaga/pkg/middlewarex"
+	"time"
 )
 
 type App struct {
@@ -102,8 +103,8 @@ func (a *App) newHttpServer(
 	a.httpServer = &http.Server{
 		Handler:      rtr,
 		Addr:         a.cfg.HttpServer.Addr,
-		ReadTimeout:  a.cfg.HttpServer.ReadTimeout,
-		WriteTimeout: a.cfg.HttpServer.WriteTimeout,
+		ReadTimeout:  time.Duration(a.cfg.HttpServer.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(a.cfg.HttpServer.WriteTimeout) * time.Second,
 		ErrorLog:     slog.NewLogLogger(a.l.Handler(), slog.LevelError),
 		BaseContext: func(net.Listener) context.Context {
 			return contextx.WithLogger(context.Background(), a.l)
@@ -133,15 +134,18 @@ func (a *App) initLogger() {
 	a.l = slog.New(handler)
 }
 
-func (a *App) Shutdown(ctx context.Context) {
+func (a *App) Shutdown() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(a.cfg.HttpServer.ShutdownTimeout)*time.Second)
+	defer cancel()
+
+	if err := a.httpServer.Shutdown(ctx); err != nil {
+		a.l.Error("shutdown http server", logx.Error(err))
+	}
 	if err := a.db.Close(); err != nil {
 		a.l.Error("close mysql db", logx.Error(err))
 	}
 	if err := a.redis.Close(); err != nil {
 		a.l.Error("close redis db", logx.Error(err))
-	}
-	if err := a.httpServer.Shutdown(ctx); err != nil {
-		a.l.Error("shutdown http server", logx.Error(err))
 	}
 	if a.logFile != nil {
 		if err := a.logFile.Close(); err != nil {

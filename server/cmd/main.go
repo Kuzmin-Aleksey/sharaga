@@ -6,7 +6,7 @@ import (
 	"sharaga/internal/config"
 )
 
-const configPath = "config/config.go"
+const configPath = "config/config.yaml"
 
 func main() {
 	cfg, err := config.ReadConfig(configPath, ".env")
