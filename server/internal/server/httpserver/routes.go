@@ -30,4 +30,13 @@ func (s *Server) RegisterRoutes(rtr *mux.Router) {
 	rtr.HandleFunc("/partners", s.authMw.withAuth(s.partnerServer.GetAll, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(get)
 	rtr.HandleFunc("/partners", s.authMw.withAuth(s.partnerServer.Update, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(put)
 	rtr.HandleFunc("/partners", s.authMw.withAuth(s.partnerServer.Delete, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(del)
+
+	rtr.HandleFunc("/products", s.authMw.withAuth(s.productServer.New, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(post)
+	rtr.HandleFunc("/products", s.authMw.withAuth(s.productServer.GetAll, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(get)
+	rtr.HandleFunc("/products", s.authMw.withAuth(s.productServer.Update, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(put)
+	rtr.HandleFunc("/products", s.authMw.withAuth(s.productServer.Delete, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(del)
+	rtr.HandleFunc("/products/types", s.authMw.withAuth(s.productServer.NewType, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(post)
+	rtr.HandleFunc("/products/types", s.authMw.withAuth(s.productServer.GetTypes, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(get)
+	rtr.HandleFunc("/products/types", s.authMw.withAuth(s.productServer.UpdateType, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(put)
+	rtr.HandleFunc("/products/types", s.authMw.withAuth(s.productServer.DeleteType, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(del)
 }

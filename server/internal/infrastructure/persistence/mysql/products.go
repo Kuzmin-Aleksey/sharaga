@@ -59,7 +59,7 @@ func (r *ProductsRepo) GetAllWithType(ctx context.Context) ([]aggregate.ProductW
 	rows, err := r.db.QueryContext(ctx, `
 	SELECT p.id, p.article, p.type, p.name, p.description, p.min_price, p.size_x, p.size_y, p.size_z, p.weight, p.weight_pack, IFNULL(t.k, 0.0) AS k
 	FROM products p 
-	LEFT JOIN types t ON p.type = t.type
+	LEFT JOIN product_types t ON p.type = t.type
 `)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -82,21 +82,27 @@ func (r *ProductsRepo) GetAllWithType(ctx context.Context) ([]aggregate.ProductW
 }
 
 func (r *ProductsRepo) SaveType(ctx context.Context, productType *entity.ProductType) error {
-	if _, err := r.db.NamedExecContext(ctx, "INSERT INTO products_type (type, k) VALUES (:type, :name, :k)", productType); err != nil {
+	res, err := r.db.NamedExecContext(ctx, "INSERT INTO product_types (type, k) VALUES (:type, :k)", productType)
+	if err != nil {
 		return failure.NewInternalError(err.Error())
 	}
+	productTypeId, err := res.LastInsertId()
+	if err != nil {
+		return failure.NewInternalError(err.Error())
+	}
+	productType.Id = int(productTypeId)
 	return nil
 }
 
 func (r *ProductsRepo) UpdateType(ctx context.Context, productType *entity.ProductType) error {
-	if _, err := r.db.NamedExecContext(ctx, "UPDATE products_type SET  type=:type, k=:k WHERE id=:id", productType); err != nil {
+	if _, err := r.db.NamedExecContext(ctx, "UPDATE product_types SET  type=:type, k=:k WHERE id=:id", productType); err != nil {
 		return failure.NewInternalError(err.Error())
 	}
 	return nil
 }
 
 func (r *ProductsRepo) DeleteType(ctx context.Context, typeId int) error {
-	if _, err := r.db.NamedExecContext(ctx, "DELETE FROM types WHERE id=:id", typeId); err != nil {
+	if _, err := r.db.NamedExecContext(ctx, "DELETE FROM product_types WHERE id=:id", typeId); err != nil {
 		return failure.NewInternalError(err.Error())
 	}
 	return nil
@@ -104,7 +110,7 @@ func (r *ProductsRepo) DeleteType(ctx context.Context, typeId int) error {
 
 func (r *ProductsRepo) GetTypes(ctx context.Context) ([]entity.ProductType, error) {
 	productTypes := make([]entity.ProductType, 0)
-	if err := r.db.SelectContext(ctx, &productTypes, "SELECT * FROM products_type"); err != nil {
+	if err := r.db.SelectContext(ctx, &productTypes, "SELECT * FROM product_types"); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return productTypes, nil
 		}
