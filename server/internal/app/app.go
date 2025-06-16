@@ -11,7 +11,13 @@ import (
 	"net/http"
 	"os"
 	"sharaga/internal/config"
+	"sharaga/internal/domain/service/auth"
+	"sharaga/internal/domain/service/orders"
+	"sharaga/internal/domain/service/partners"
+	"sharaga/internal/domain/service/products"
+	"sharaga/internal/domain/service/users"
 	"sharaga/internal/infrastructure/persistence/mysql"
+	"sharaga/internal/infrastructure/persistence/redis"
 	"sharaga/internal/server/httpserver"
 	"sharaga/pkg/contextx"
 	"sharaga/pkg/logx"
@@ -23,6 +29,7 @@ type App struct {
 	l          *slog.Logger
 	httpServer *http.Server
 	db         *sqlx.DB
+	redis      *redis.Connection
 	logFile    io.Closer
 }
 
@@ -40,13 +47,45 @@ func (a *App) Run() (err error) {
 		return fmt.Errorf("mysql connect: %w", err)
 	}
 
-	// todo
+	a.redis, err = redis.NewConnection(a.cfg.Redis)
 
-	return nil
+	usersRepo := mysql.NewUsersRepo(a.db)
+	productsRepo := mysql.NewProductsRepo(a.db)
+	partnersRepo := mysql.NewPartnersRepo(a.db)
+	ordersRepo := mysql.NewOrdersRepo(a.db)
+
+	userService := users.NewService(usersRepo)
+	productService := products.NewService(productsRepo)
+	partnerService := partners.NewService(partnersRepo)
+	orderService := orders.NewService(ordersRepo)
+	authService := auth.NewService(usersRepo, a.redis)
+
+	a.newHttpServer(
+		userService,
+		productService,
+		partnerService,
+		orderService,
+		authService,
+	)
+
+	return a.httpServer.ListenAndServe()
 }
 
-func (a *App) newHttpServer() {
-	restServer := httpserver.NewServer()
+func (a *App) newHttpServer(
+	userService *users.Service,
+	productService *products.Service,
+	partnerService *partners.Service,
+	orderService *orders.Service,
+	authService *auth.Service,
+) {
+	restServer := httpserver.NewServer(
+		httpserver.NewUserServer(userService),
+		httpserver.NewProductServer(productService),
+		httpserver.NewPartnerServer(partnerService),
+		httpserver.NewOrderServer(orderService),
+		httpserver.NewAuthServer(authService),
+		httpserver.NewMwAuth(authService, userService),
+	)
 
 	rtr := mux.NewRouter()
 	restServer.RegisterRoutes(rtr)
@@ -98,7 +137,15 @@ func (a *App) Shutdown(ctx context.Context) {
 	if err := a.db.Close(); err != nil {
 		a.l.Error("close mysql db", logx.Error(err))
 	}
+	if err := a.redis.Close(); err != nil {
+		a.l.Error("close redis db", logx.Error(err))
+	}
 	if err := a.httpServer.Shutdown(ctx); err != nil {
 		a.l.Error("shutdown http server", logx.Error(err))
+	}
+	if a.logFile != nil {
+		if err := a.logFile.Close(); err != nil {
+			a.l.Error("close log file", logx.Error(err))
+		}
 	}
 }

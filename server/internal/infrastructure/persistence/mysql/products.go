@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/jmoiron/sqlx"
+	"sharaga/internal/domain/aggregate"
 	"sharaga/internal/domain/entity"
 	"sharaga/pkg/failure"
 )
@@ -51,6 +52,72 @@ func (r *ProductsRepo) GetAll(ctx context.Context) ([]entity.Product, error) {
 		return nil, failure.NewInternalError(err.Error())
 	}
 	return products, nil
+}
+
+func (r *ProductsRepo) GetAllWithType(ctx context.Context) ([]aggregate.ProductWithType, error) {
+	products := make([]aggregate.ProductWithType, 0)
+	rows, err := r.db.QueryContext(ctx, `
+	SELECT p.id, p.article, p.type, p.name, p.description, p.min_price, p.size_x, p.size_y, p.size_z, p.weight, p.weight_pack, IFNULL(t.k, 0.0) AS k
+	FROM products p 
+	LEFT JOIN types t ON p.type = t.type
+`)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return products, nil
+		}
+		return nil, failure.NewInternalError(err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var product aggregate.ProductWithType
+
+		if err := rows.Scan(&product.Product.Id, &product.Product.Article, &product.Product.Type, &product.Product.Name, &product.Product.Description, &product.Product.MinPrice, &product.Product.SizeX, &product.Product.SizeY, &product.Product.SizeZ, &product.Product.Weight, &product.Product.WeightPack, &product.Type.Type); err != nil {
+			return nil, failure.NewInternalError(err.Error())
+		}
+		products = append(products, product)
+
+	}
+	return products, nil
+}
+
+func (r *ProductsRepo) SaveType(ctx context.Context, productType *entity.ProductType) error {
+	if _, err := r.db.NamedExecContext(ctx, "INSERT INTO products_type (type, k) VALUES (:type, :name, :k)", productType); err != nil {
+		return failure.NewInternalError(err.Error())
+	}
+	return nil
+}
+
+func (r *ProductsRepo) UpdateType(ctx context.Context, productType *entity.ProductType) error {
+	if _, err := r.db.NamedExecContext(ctx, "UPDATE products_type SET  type=:type, k=:k WHERE id=:id", productType); err != nil {
+		return failure.NewInternalError(err.Error())
+	}
+	return nil
+}
+
+func (r *ProductsRepo) DeleteType(ctx context.Context, typeId int) error {
+	if _, err := r.db.NamedExecContext(ctx, "DELETE FROM types WHERE id=:id", typeId); err != nil {
+		return failure.NewInternalError(err.Error())
+	}
+	return nil
+}
+
+func (r *ProductsRepo) GetTypes(ctx context.Context) ([]entity.ProductType, error) {
+	productTypes := make([]entity.ProductType, 0)
+	if err := r.db.SelectContext(ctx, &productTypes, "SELECT * FROM products_type"); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return productTypes, nil
+		}
+		return nil, failure.NewInternalError(err.Error())
+	}
+	return productTypes, nil
+}
+
+func (r *ProductsRepo) Update(ctx context.Context, product *entity.Product) error {
+	if _, err := r.db.NamedExecContext(ctx, "UPDATE products SET article=:article, type=:type, name=:name, description=:description, min_price=:min_price, size_x=:size_x, size_y=:size_y, size_z=:size_z, weight=:weight, weight_pack=:weight_pack WHERE id=:id", product); err != nil {
+		return failure.NewInternalError(err.Error())
+	}
+	return nil
 }
 
 func (r *ProductsRepo) Delete(ctx context.Context, id int) error {

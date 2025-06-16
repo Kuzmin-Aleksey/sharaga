@@ -95,3 +95,15 @@ func (r *UsersRepo) Delete(ctx context.Context, id int) error {
 	}
 	return nil
 }
+
+func (r *UsersRepo) GetRole(ctx context.Context, userId int) (string, error) {
+	var role string
+	if err := r.db.QueryRowContext(ctx, "SELECT role FROM users WHERE id=?", userId).Scan(&role); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", failure.NewNotFoundError(err.Error())
+		}
+		return "", failure.NewInternalError(err.Error())
+	}
+
+	return role, nil
+}

@@ -37,6 +37,8 @@ func getCodeFromError(err error) (errcodes.Code, int) {
 		return errcodes.NotFound, http.StatusNotFound
 	case failure.IsInvalidRequestError(err):
 		return errcodes.Validation, http.StatusBadRequest
+	case failure.IsUnauthorizedError(err):
+		return errcodes.Unauthorized, http.StatusUnauthorized
 	default:
 		return errcodes.Internal, http.StatusInternalServerError
 	}

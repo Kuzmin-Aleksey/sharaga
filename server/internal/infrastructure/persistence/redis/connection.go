@@ -10,7 +10,7 @@ type Connection struct {
 	*redis.Client
 }
 
-func NewConnection(cfg *config.RedisConfig) (*Connection, error) {
+func NewConnection(cfg config.RedisConfig) (*Connection, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     cfg.Host,
 		Password: cfg.Password,

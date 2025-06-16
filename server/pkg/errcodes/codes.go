@@ -7,7 +7,8 @@ func (e Code) String() string {
 }
 
 const (
-	Internal   Code = "InternalError"
-	NotFound   Code = "NotFound"
-	Validation Code = "ValidationError"
+	Internal     Code = "InternalError"
+	NotFound     Code = "NotFound"
+	Validation   Code = "ValidationError"
+	Unauthorized Code = "Unauthorized"
 )
