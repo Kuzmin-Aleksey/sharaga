@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"sharaga/internal/domain/aggregate"
 	"sharaga/internal/domain/entity"
 	"sharaga/pkg/failure"
 	"sharaga/pkg/rest"
@@ -13,7 +12,7 @@ import (
 
 type productService interface {
 	NewProduct(ctx context.Context, product *entity.Product) error
-	GetAllWithType(ctx context.Context) ([]aggregate.ProductWithType, error)
+	GetAll(ctx context.Context) ([]entity.Product, error)
 	Update(ctx context.Context, product *entity.Product) error
 	Delete(ctx context.Context, id int) error
 	NewType(ctx context.Context, productType *entity.ProductType) error
@@ -54,7 +53,7 @@ func (s *ProductServer) New(w http.ResponseWriter, r *http.Request) {
 func (s *ProductServer) GetAll(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	products, err := s.productService.GetAllWithType(ctx)
+	products, err := s.productService.GetAll(ctx)
 	if err != nil {
 		writeAndLogErr(ctx, w, err)
 		return

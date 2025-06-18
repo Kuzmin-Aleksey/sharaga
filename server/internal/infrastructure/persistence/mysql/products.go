@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/jmoiron/sqlx"
-	"sharaga/internal/domain/aggregate"
 	"sharaga/internal/domain/entity"
 	"sharaga/pkg/failure"
 )
@@ -54,33 +53,6 @@ func (r *ProductsRepo) GetAll(ctx context.Context) ([]entity.Product, error) {
 	return products, nil
 }
 
-func (r *ProductsRepo) GetAllWithType(ctx context.Context) ([]aggregate.ProductWithType, error) {
-	products := make([]aggregate.ProductWithType, 0)
-	rows, err := r.db.QueryContext(ctx, `
-	SELECT p.id, p.article, p.type, p.name, p.description, p.min_price, p.size_x, p.size_y, p.size_z, p.weight, p.weight_pack, IFNULL(t.k, 0.0) AS k
-	FROM products p 
-	LEFT JOIN product_types t ON p.type = t.type
-`)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return products, nil
-		}
-		return nil, failure.NewInternalError(err.Error())
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var product aggregate.ProductWithType
-
-		if err := rows.Scan(&product.Product.Id, &product.Product.Article, &product.Product.Type, &product.Product.Name, &product.Product.Description, &product.Product.MinPrice, &product.Product.SizeX, &product.Product.SizeY, &product.Product.SizeZ, &product.Product.Weight, &product.Product.WeightPack, &product.Type.Type); err != nil {
-			return nil, failure.NewInternalError(err.Error())
-		}
-		products = append(products, product)
-
-	}
-	return products, nil
-}
-
 func (r *ProductsRepo) SaveType(ctx context.Context, productType *entity.ProductType) error {
 	res, err := r.db.NamedExecContext(ctx, "INSERT INTO product_types (type, k) VALUES (:type, :k)", productType)
 	if err != nil {
@@ -102,7 +74,7 @@ func (r *ProductsRepo) UpdateType(ctx context.Context, productType *entity.Produ
 }
 
 func (r *ProductsRepo) DeleteType(ctx context.Context, typeId int) error {
-	if _, err := r.db.NamedExecContext(ctx, "DELETE FROM product_types WHERE id=:id", typeId); err != nil {
+	if _, err := r.db.ExecContext(ctx, "DELETE FROM product_types WHERE id=?", typeId); err != nil {
 		return failure.NewInternalError(err.Error())
 	}
 	return nil

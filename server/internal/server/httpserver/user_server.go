@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"sharaga/internal/domain/entity"
+	"sharaga/pkg/contextx"
 	"sharaga/pkg/failure"
 	"sharaga/pkg/rest"
 	"strconv"
@@ -15,6 +16,7 @@ type userService interface {
 	UpdateUser(ctx context.Context, user *entity.User) error
 	GetAll(ctx context.Context) ([]entity.User, error)
 	DeleteUser(ctx context.Context, userId int) error
+	GetById(ctx context.Context, userId int) (*entity.User, error)
 }
 
 type UserServer struct {
@@ -88,4 +90,17 @@ func (s *UserServer) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJson(ctx, w, users, http.StatusOK)
+}
+
+func (s *UserServer) GetSelf(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userId := contextx.GetUserId(ctx)
+
+	user, err := s.userService.GetById(ctx, int(userId))
+	if err != nil {
+		writeAndLogErr(ctx, w, err)
+		return
+	}
+
+	writeJson(ctx, w, user, http.StatusOK)
 }

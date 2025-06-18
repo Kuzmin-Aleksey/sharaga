@@ -39,13 +39,8 @@ func (s *Service) NewOrder(ctx context.Context, order *aggregate.OrderProducts) 
 
 	order.Order.Price = 0
 
-	for _, orderProd := range order.Products {
-		prod, err := s.products.FindById(ctx, orderProd.ProductId)
-		if err != nil {
-			return fmt.Errorf("%s: %w", op, err)
-		}
-
-		order.Order.Price += prod.MinPrice * orderProd.Quantity
+	for _, prod := range order.Products {
+		order.Order.Price += prod.Price * prod.Quantity
 	}
 
 	discount, err := s.CalcDiscount(ctx, order.Order.PartnerId)

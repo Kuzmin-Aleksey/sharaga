@@ -10,8 +10,9 @@ type Repository interface {
 	Save(ctx context.Context, user *entity.User) (err error)
 	Update(ctx context.Context, user *entity.User) (err error)
 	GetAll(ctx context.Context) ([]entity.User, error)
-	GetRole(ctx context.Context, userId int) (string, error)
 	Delete(ctx context.Context, id int) error
+	GetRole(ctx context.Context, userId int) (string, error)
+	FindById(ctx context.Context, id int) (*entity.User, error)
 }
 
 type Service struct {
@@ -57,6 +58,16 @@ func (s *Service) GetAll(ctx context.Context) ([]entity.User, error) {
 	return users, nil
 }
 
+func (s *Service) GetById(ctx context.Context, userId int) (*entity.User, error) {
+	const op = "users.GetById"
+	user, err := s.repo.FindById(ctx, userId)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return user, nil
+}
+
 func (s *Service) GetRole(ctx context.Context, userId int) (string, error) {
 	const op = "users.GetRole"
 	role, err := s.repo.GetRole(ctx, userId)
@@ -83,7 +94,7 @@ func (s *Service) CreateAdminIfNotExist(ctx context.Context) error {
 
 	user := &entity.User{
 		Role:     entity.UserRoleAdmin,
-		Email:    "admin@example.com",
+		Email:    "admin",
 		Name:     "admin",
 		Password: "admin",
 	}

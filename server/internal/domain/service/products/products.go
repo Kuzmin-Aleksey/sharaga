@@ -3,13 +3,12 @@ package products
 import (
 	"context"
 	"fmt"
-	"sharaga/internal/domain/aggregate"
 	"sharaga/internal/domain/entity"
 )
 
 type Repository interface {
 	Save(ctx context.Context, product *entity.Product) error
-	GetAllWithType(ctx context.Context) ([]aggregate.ProductWithType, error)
+	GetAll(ctx context.Context) ([]entity.Product, error)
 	Update(ctx context.Context, product *entity.Product) error
 	Delete(ctx context.Context, id int) error
 
@@ -37,10 +36,10 @@ func (s *Service) NewProduct(ctx context.Context, product *entity.Product) error
 	return nil
 }
 
-func (s *Service) GetAllWithType(ctx context.Context) ([]aggregate.ProductWithType, error) {
-	const op = "service.GetAllWithType"
+func (s *Service) GetAll(ctx context.Context) ([]entity.Product, error) {
+	const op = "service.GetAll"
 
-	products, err := s.repo.GetAllWithType(ctx)
+	products, err := s.repo.GetAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}

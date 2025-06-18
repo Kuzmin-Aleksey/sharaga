@@ -14,13 +14,18 @@ const (
 )
 
 func (s *Server) RegisterRoutes(rtr *mux.Router) {
+	rtr.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
 	rtr.HandleFunc("/auth/login", s.authServer.login)
 	rtr.HandleFunc("/auth/refresh", s.authServer.refreshToken)
 
-	rtr.HandleFunc("/users", s.authMw.withAuth(s.userServer.New, entity.UserRoleAdmin)).Methods(post)
+	rtr.HandleFunc("/users", s.authMw.withAuth(s.userServer.New, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(post)
 	rtr.HandleFunc("/users", s.authMw.withAuth(s.userServer.Update, entity.UserRoleAdmin)).Methods(put)
 	rtr.HandleFunc("/users", s.authMw.withAuth(s.userServer.GetAll, entity.UserRoleAdmin)).Methods(get)
 	rtr.HandleFunc("/users", s.authMw.withAuth(s.userServer.Delete, entity.UserRoleAdmin)).Methods(del)
+	rtr.HandleFunc("/users/self", s.authMw.withAuth(s.userServer.GetSelf, entity.UserRoleAdmin, entity.UserRoleManager, entity.UserRoleWorker)).Methods(get)
 
 	rtr.HandleFunc("/orders", s.authMw.withAuth(s.orderServer.New, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(post)
 	rtr.HandleFunc("/orders", s.authMw.withAuth(s.orderServer.GetAll, entity.UserRoleAdmin, entity.UserRoleManager)).Methods(get)
