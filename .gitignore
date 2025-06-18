@@ -2,5 +2,6 @@
 *.exe
 *.log
 **/config.yaml
+**/token.txt
 .env
 *.drawio.bkp
